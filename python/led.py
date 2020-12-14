@@ -70,16 +70,27 @@ def _update_esp8266():
     idx = np.array_split(idx, n_packets)
     for packet_indices in idx:
         m = '' if _is_python_2 else []
+        m.append(config.WLED_PROTOCOL)
+        m.append(config.WLED_TIMEOUT)
         for i in packet_indices:
             if _is_python_2:
-                m += chr(i) + chr(p[0][i]) + chr(p[1][i]) + chr(p[2][i])
+                if config.WLED_PROTOCOL == 1:
+                    m += chr(i)
+                m += chr(p[0][i]) + chr(p[1][i]) + chr(p[2][i])
+                if config.WLED_PROTOCOL == 3:
+                    m += chr(0)
             else:
-                m.append(i)  # Index of pixel to change
-                m.append(p[0][i])  # Pixel red value
+                if config.WLED_PROTOCOL == 1:
+                    m.append(i)  # Index of pixel to change
+                m.append(p[0][i])  # Pixel reds value
                 m.append(p[1][i])  # Pixel green value
                 m.append(p[2][i])  # Pixel blue value
+                if config.WLED_PROTOCOL == 3:
+                    m.append(0)
+
         m = m if _is_python_2 else bytes(m)
-        _sock.sendto(m, (config.UDP_IP, config.UDP_PORT))
+        for ip in config.UDP_IP:
+            _sock.sendto(m, (ip, config.UDP_PORT))
     _prev_pixels = np.copy(p)
 
 
